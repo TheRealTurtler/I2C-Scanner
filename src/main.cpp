@@ -36,22 +36,44 @@ void scanI2C()
 
 	int deviceCount = 0;
 
-	// Address range: 0x00 to 0x7F
-	for (uint8_t address = I2C_ADDRESS_START; address <= I2C_ADDRESS_END; address++)
+	// Search for connected devices in specified range
+	for (uint8_t address = I2C_ADDRESS_START; address <= I2C_ADDRESS_END; ++address)
 	{
 		Wire.beginTransmission(address);
-		uint8_t error = Wire.endTransmission();
+		const uint8_t error = Wire.endTransmission();
 
-		if (error == 0)
+		switch (error)
 		{
+		case 0:
 			// Device found
-			log_i("I2C Device found at address: 0x%02X (%d)", address, address);
-			deviceCount++;
-		}
-		else if (error == 4)
-		{
+			log_i("I2C Address: 0x%02X -> Found Device! HEX: 0x%02X | DEC: %d", address, address, address);
+			++deviceCount;
+			break;
+		case 1:
+			// Transmit buffer too small
+			log_w("I2C Address: 0x%02X -> Transmit Buffer too small!", address);
+			break;
+		case 2:
+			// Received NACK on Address transmission
+			log_d("I2C Address: 0x%02X -> Received NACK on Address Transmission", address);
+			break;
+		case 3:
+			// Received NACK on data transmission
+			log_w("I2C Address: 0x%02X -> Received NACK on Data Transmission!", address);
+			break;
+		case 4:
+			// Other error
+			log_w("I2C Address: 0x%02X -> Other Error!", address);
+			break;
+		case 5:
+			// Timeout
+			log_d("I2C Address: 0x%02X -> Timeout!", address);
+			break;
+
+		default:
 			// Unknown error
-			log_w("I2C Error at address: 0x%02X", address);
+			log_e("I2C Address: 0x%02X -> Unknown Error!", address);
+			break;
 		}
 	}
 
